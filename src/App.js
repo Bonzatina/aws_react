@@ -59,11 +59,46 @@ class App extends Component {
 
     try {
       const jwtToken = await this.login(this.state.username, this.state.password);
-      const decodeJwtToken = jwtToken.split('.')[0];
-     // const expiration = JSON.parse(util.base64.decode(decodeJwtToken).toString('utf8'));
+     // const decodeJwtToken = jwtToken.split('.')[0];
+     // const tokenData = JSON.parse(util.base64.decode(decodeJwtToken).toString('utf8'));
 
-      console.log(decodeJwtToken);
+      //console.log(tokenData);
       this.updateUserToken(jwtToken);
+
+        AWS.config.region = "us-east-1";
+        AWS.config.credentials = new CognitoIdentityCredentials({IdentityPoolId: config.IdentityPoolId,});
+
+        let accessKeyId, secretAccessKey, sessionToken;
+
+
+
+        AWS.config.credentials.get(function () {
+            accessKeyId = AWS.config.credentials.accessKeyId;
+            secretAccessKey = AWS.config.credentials.secretAccessKey;
+            sessionToken = AWS.config.credentials.sessionToken;
+
+            const apigClient = global.apigClientFactory.newClient({
+                accessKey: accessKeyId,
+                secretKey: secretAccessKey,
+                sessionToken: sessionToken,
+                region: "us-east-1"
+            });
+
+            const additionalParams = {
+                headers: {
+                    Authorization: jwtToken
+                }}
+
+
+            apigClient.identityGet({}, {}, additionalParams)
+                .then(function (result) {
+                    console.log(result)
+                }).catch(function (er) {
+                console.log(er)
+            });
+        });
+
+
     }
     catch (e) {
       console.log(e);
@@ -79,39 +114,6 @@ class App extends Component {
 
 
   render() {
-    // apigClient.identityGet({});
-    AWS.config.region = "us-east-1";
-    AWS.config.credentials = new CognitoIdentityCredentials({IdentityPoolId: config.IdentityPoolId,});
-
-    let accessKeyId, secretAccessKey, sessionToken;
-
-    var additionalParams = {
-      headers: {
-        Authorization: this.state.userToken
-      }}
-
-    AWS.config.credentials.get(function () {
-      accessKeyId = AWS.config.credentials.accessKeyId;
-      secretAccessKey = AWS.config.credentials.secretAccessKey;
-      sessionToken = AWS.config.credentials.sessionToken;
-
-      const apigClient = global.apigClientFactory.newClient({
-        accessKey: accessKeyId,
-        secretKey: secretAccessKey,
-        sessionToken: sessionToken,
-        region: "us-east-1"
-      });
-
-
-
-      console.log(additionalParams)
-      apigClient.identityiamGet({}, {}, additionalParams)
-        .then(function (result) {
-          console.log(result)
-        }).catch(function (er) {
-        console.log(er)
-      });
-    });
 
 
     return (
